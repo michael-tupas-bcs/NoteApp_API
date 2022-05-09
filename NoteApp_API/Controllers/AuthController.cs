@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using NoteApp_API.Data;
 using NoteApp_API.Services.UserService;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -13,14 +14,16 @@ namespace NoteApp_API.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
+        public readonly DataContext _usercontext;
         public static UserModel.UserData user = new UserModel.UserData();
         private readonly IConfiguration _configuration;
         private readonly IUserService _userService;
          
-        public AuthController(IConfiguration configuration, IUserService userService) 
+        public AuthController(IConfiguration configuration, IUserService userService, DataContext dataContext) 
         {
             _configuration = configuration;
             _userService = userService;
+            _usercontext = dataContext;
         }
 
         [HttpGet, Authorize]
@@ -36,6 +39,7 @@ namespace NoteApp_API.Controllers
             //return Ok(new { userName, userName2, role});
         }
 
+
         [HttpPost("register")]
         public async Task<ActionResult<UserModel.UserData>> Register(UserModel.UserDto request)
         {
@@ -45,22 +49,27 @@ namespace NoteApp_API.Controllers
             user.PasswordHash = passwordHash;
             user.PasswordSalt = passwordSalt;
 
-            return Ok(user);
+            _usercontext.Users.Add(user);
+            await _usercontext.SaveChangesAsync();
+            //return Ok(await _usercontext.Users.ToListAsync());
+            return Ok("Registration Successful.");
         }
 
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login(UserModel.UserDto request)
         {
-            if (user.UserName != request.UserName)
+            var dbUser = await _usercontext.Users.FirstOrDefaultAsync(x => x.UserName == request.UserName);
+
+            if (dbUser.UserName != request.UserName)
             {
                 return BadRequest("User not found.");
             }
 
-            if (!VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
+            if (!VerifyPasswordHash(request.Password, dbUser.PasswordHash, dbUser.PasswordSalt))
             {
                 return BadRequest("Wrong password.");
             }
-
+            user.Id = dbUser.Id;
             string token = CreateToken(user);
             return Ok(token);
         }
@@ -69,7 +78,7 @@ namespace NoteApp_API.Controllers
         {
             List<Claim> claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.Name, user.Id.ToString()),
                 new Claim(ClaimTypes.Role, "Admin"),
             };
 
