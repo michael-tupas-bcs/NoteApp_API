@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using NoteApp_API.Services.UserService;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -13,10 +15,25 @@ namespace NoteApp_API.Controllers
     {
         public static UserModel.UserData user = new UserModel.UserData();
         private readonly IConfiguration _configuration;
-
-        public AuthController(IConfiguration configuration) 
+        private readonly IUserService _userService;
+         
+        public AuthController(IConfiguration configuration, IUserService userService) 
         {
             _configuration = configuration;
+            _userService = userService;
+        }
+
+        [HttpGet, Authorize]
+        public ActionResult<string> GetMe()
+        { 
+            var userName = _userService.GetMyName();
+            return Ok(userName);
+
+            //var userName = User?.Identity?.Name;
+            //var userName2 = User?.FindFirstValue(ClaimTypes.Name);
+            //var role = User?.FindFirstValue(ClaimTypes.Role);
+
+            //return Ok(new { userName, userName2, role});
         }
 
         [HttpPost("register")]
