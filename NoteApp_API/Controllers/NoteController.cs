@@ -36,7 +36,7 @@ namespace NoteApp_API.Controllers
         [HttpGet("{id}"), Authorize]
         public async Task<ActionResult<List<Note>>> Get(int id)
         {
-            var note = await _context.Notes.FindAsync(id);
+            var note = await _context.Notes.Where(x => x.userid == id).ToListAsync();
             var response = new Response();
             
 
