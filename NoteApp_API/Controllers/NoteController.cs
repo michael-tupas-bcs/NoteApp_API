@@ -43,7 +43,7 @@ namespace NoteApp_API.Controllers
 
         [HttpPost, Authorize]
         public async Task<ActionResult<List<Note>>> AddNote(Note note) 
-        {
+        { 
             note.userid = Convert.ToInt32(_userService.GetMyName());
             _context.Notes.Add(note);
             await _context.SaveChangesAsync();
