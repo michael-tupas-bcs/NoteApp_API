@@ -76,7 +76,7 @@ namespace NoteApp_API.Controllers
             var dbUser = await _usercontext.Users.FirstOrDefaultAsync(x => x.UserName == request.UserName);
             var response = new Response();
 
-            if (dbUser.UserName != request.UserName)
+            if (dbUser == null)
             {
                 response.success = 0;
                 response.message = "User not found.";
