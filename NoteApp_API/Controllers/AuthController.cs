@@ -94,6 +94,7 @@ namespace NoteApp_API.Controllers
 
             response.success = 1;
             response.message = "Login Successful.";
+            response.data = dbUser;
             response.token = token;
             return Ok(response);
         }

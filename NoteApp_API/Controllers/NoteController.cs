@@ -21,12 +21,12 @@ namespace NoteApp_API.Controllers
             _userService = userService;
         }
 
-        [HttpGet, Authorize]
+        [HttpGet]
         public async Task<ActionResult<List<Note>>> Get()
         {
-            //var notes = await _context.Notes.ToArrayAsync();
-            var notes = await _context.Notes.Where(x => x.userid == Convert.ToInt32(_userService.GetMyName())).ToListAsync();
-            Console.Write(notes);
+            var notes = await _context.Notes.ToArrayAsync();
+            //var notes = await _context.Notes.Where(x => x.userid == Convert.ToInt32(_userService.GetMyName())).ToListAsync();
+            
             var response = new Response();
             response.success = 1;
             response.data = notes;
