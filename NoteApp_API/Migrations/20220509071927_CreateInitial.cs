@@ -22,7 +22,7 @@ namespace NoteApp_API.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Notes", x => x.id);
-                });
+            });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

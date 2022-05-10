@@ -7,6 +7,7 @@ using NoteApp_API.Services.UserService;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using NoteApp_API.NoteModel;
 
 namespace NoteApp_API.Controllers
 {
@@ -43,35 +44,58 @@ namespace NoteApp_API.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<UserModel.UserData>> Register(UserModel.UserDto request)
         {
-            CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
+            var dbUser = await _usercontext.Users.FirstOrDefaultAsync(x => x.UserName == request.UserName);
+            var response = new Response();
 
+            if (dbUser != null)
+            {
+                response.success = 0;
+                response.message = "Username already exists.";
+                return Ok(response);
+            }
+
+            CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
+            
+            user.Id = 0;
             user.UserName = request.UserName;
             user.PasswordHash = passwordHash;
             user.PasswordSalt = passwordSalt;
 
             _usercontext.Users.Add(user);
             await _usercontext.SaveChangesAsync();
+
             //return Ok(await _usercontext.Users.ToListAsync());
-            return Ok("Registration Successful.");
+            response.success = 1;
+            response.message = "Registration Successful.";
+            return Ok(response);
         }
 
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login(UserModel.UserDto request)
         {
             var dbUser = await _usercontext.Users.FirstOrDefaultAsync(x => x.UserName == request.UserName);
+            var response = new Response();
 
             if (dbUser.UserName != request.UserName)
             {
-                return BadRequest("User not found.");
+                response.success = 0;
+                response.message = "User not found.";
+                return Ok(response);
             }
 
             if (!VerifyPasswordHash(request.Password, dbUser.PasswordHash, dbUser.PasswordSalt))
             {
-                return BadRequest("Wrong password.");
+                response.success = 0;
+                response.message = "Wrong password.";
+                return Ok(response);
             }
             user.Id = dbUser.Id;
             string token = CreateToken(user);
-            return Ok(token);
+
+            response.success = 1;
+            response.message = "Login Successful.";
+            response.token = token;
+            return Ok(response);
         }
 
         private string CreateToken(UserModel.UserData user) 
